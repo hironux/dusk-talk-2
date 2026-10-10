@@ -1,0 +1,934 @@
+<!doctype html>
+<html lang="en">
+<head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; media-src data: blob:; base-uri 'none'; form-action 'none'">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dusk Talk 2</title>
+<style>
+:root{--ink:#3d2a56;--glass:rgba(35,22,60,.42);--ring:#ffd76a}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP","Segoe UI",sans-serif;color:#fff;background:#2b2150;overflow:hidden}
+button,input{font:inherit}
+:focus-visible{outline:3px solid var(--ring);outline-offset:2px}
+.sky{position:fixed;inset:0;z-index:0}
+.sky-layer{position:absolute;inset:0;opacity:0;transition:opacity 1.8s ease}
+.sky-layer.on{opacity:1}
+.sky::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(20,10,40,.28),transparent 35%,rgba(10,5,30,.18))}
+.stars{position:absolute;inset:0;opacity:.3;transition:opacity 1.8s ease;z-index:1;
+background:
+radial-gradient(1.5px 1.5px at 12% 18%,#fff,transparent),radial-gradient(1px 1px at 28% 8%,#fff,transparent),
+radial-gradient(2px 2px at 44% 22%,#fff,transparent),radial-gradient(1px 1px at 63% 12%,#fff,transparent),
+radial-gradient(1.5px 1.5px at 78% 30%,#fff,transparent),radial-gradient(1px 1px at 90% 10%,#fff,transparent),
+radial-gradient(1px 1px at 8% 44%,#fff,transparent),radial-gradient(1.5px 1.5px at 35% 40%,#fff,transparent),
+radial-gradient(1px 1px at 55% 5%,#fff,transparent),radial-gradient(1.5px 1.5px at 93% 48%,#fff,transparent);
+animation:twinkle 5s ease-in-out infinite alternate}
+@keyframes twinkle{from{filter:brightness(.75)}to{filter:brightness(1.3)}}
+.orb{position:fixed;z-index:1;right:6%;top:96px;font-size:calc(var(--os,1)*84px);line-height:1;opacity:.9;pointer-events:none;animation:bob 7s ease-in-out infinite;filter:drop-shadow(0 6px 24px rgba(255,255,255,.35))}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.orb2{position:fixed;z-index:1;right:calc(6% + 96px);top:168px;font-size:42px;line-height:1;opacity:.8;pointer-events:none;display:none;animation:bob 9s ease-in-out infinite reverse;filter:drop-shadow(0 4px 16px rgba(255,255,255,.3))}
+#app{position:relative;z-index:2;display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:680px;margin:0 auto}
+header{padding:14px 16px 6px;text-shadow:0 1px 8px rgba(0,0,0,.35)}
+.top{display:flex;align-items:center;gap:8px}
+h1{font-size:20px;margin:0;flex:1;letter-spacing:.5px}
+h1 small{display:block;font-size:12px;font-weight:400;opacity:.92;letter-spacing:0;margin-top:2px}
+.gbtn{background:var(--glass);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:8px 12px;cursor:pointer;font-size:13px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);min-height:38px}
+.gbtn:hover{background:rgba(35,22,60,.6)}
+.lang span{padding:2px 6px;border-radius:999px;opacity:.7}
+.lang span.act{background:#fff;color:var(--ink);opacity:1;font-weight:700}
+.pill{margin-top:10px;width:100%;text-align:left;display:flex;align-items:center;gap:8px;font-size:12.5px;text-shadow:none}
+.pill .chev{margin-left:auto;opacity:.8;transition:transform .2s}
+.pill[aria-expanded=true] .chev{transform:rotate(180deg)}
+#legend{display:none;margin-top:8px;background:var(--glass);border:1px solid rgba(255,255,255,.25);border-radius:16px;padding:10px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#legend.open{display:block}
+#legend p{margin:0 0 8px;font-size:12px;opacity:.9}
+.lg{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px}
+.lg button{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:12px;padding:6px 8px;cursor:pointer;font-size:12px;text-align:left}
+.lg button:hover{background:rgba(255,255,255,.24)}
+.sw{width:22px;height:22px;border-radius:50%;flex:none;border:1.5px solid rgba(255,255,255,.7)}
+#chat{flex:1;overflow-y:auto;padding:12px 16px 8px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
+.row{display:flex;flex-direction:column;animation:rise .45s ease both}
+.row.user{align-items:flex-end}
+.row.bot{align-items:flex-start}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.bubble{white-space:pre-line;max-width:86%;padding:12px 15px;font-size:15px;line-height:1.65;overflow-wrap:anywhere}
+.bubble.bot{background:var(--glass);border:1px solid rgba(255,255,255,.22);border-radius:18px 18px 18px 4px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-shadow:0 1px 3px rgba(0,0,0,.25)}
+.bubble.user{background:rgba(255,255,255,.93);color:var(--ink);border-radius:18px 18px 4px 18px}
+.chip{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.9);color:var(--ink);border-radius:12px;padding:4px 10px;font-size:12px;margin-bottom:6px}
+.typing .bubble{display:flex;gap:5px;padding:14px 16px}
+.typing i{width:7px;height:7px;border-radius:50%;background:#fff;opacity:.4;animation:dot 1.1s infinite}
+.typing i:nth-child(2){animation-delay:.18s}.typing i:nth-child(3){animation-delay:.36s}
+@keyframes dot{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
+.card{background:rgba(255,255,255,.94);color:var(--ink);border-radius:20px;overflow:hidden;width:100%;box-shadow:0 10px 30px rgba(10,5,30,.35)}
+.card .strip{height:86px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.4)}
+.card .strip b{font-size:17px}.card .strip span{font-size:40px}
+.card .body{padding:14px 16px 16px;font-size:14.5px;line-height:1.7}
+.card h3{margin:0 0 6px;font-size:13px;color:#6b5a85;letter-spacing:.3px}
+.mchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.mchips em{font-style:normal;background:#efe9f7;border-radius:999px;padding:3px 10px;font-size:13px}
+.card p{margin:0 0 12px}
+.card .note{background:#f6f1fb;border-radius:12px;padding:10px 12px}
+.cbtn{background:linear-gradient(135deg,#c76b9a,#6b5ab0);color:#fff;border:0;border-radius:999px;padding:10px 18px;cursor:pointer;font-weight:600}
+.cbtn:hover{filter:brightness(1.08)}
+.cbtn.sub{background:#efe9f7;color:var(--ink)}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px}
+.card .lead{font-size:17px;line-height:1.75;font-weight:700;margin:0 0 12px;color:#3d2a56}
+.card .flow{font-size:13.5px;color:#6b5a85;margin:0 0 12px}
+.qr{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;max-width:94%}
+.qbtn{color:#fff;border:1px solid rgba(255,255,255,.55);border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer;text-shadow:0 1px 3px rgba(0,0,0,.35);background:rgba(35,22,60,.45);min-height:36px}
+.qbtn:hover{background:rgba(35,22,60,.7)}
+footer{padding:6px 16px 14px}
+#starters{display:flex;gap:8px;overflow-x:auto;padding:4px 0 8px;scrollbar-width:none}
+#starters::-webkit-scrollbar{display:none}
+#starters button{flex:none;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:8px 13px;font-size:13px;cursor:pointer;text-shadow:0 1px 3px rgba(0,0,0,.3);background-color:rgba(35,22,60,.35)}
+#starters button:hover{background:rgba(35,22,60,.6)}
+form{display:flex;gap:8px;align-items:center}
+#msg{flex:1;min-width:0;border:0;border-radius:24px;padding:13px 18px;font-size:15px;background:rgba(255,255,255,.95);color:#3a2a50}
+#msg::placeholder{color:#6f5f85}
+#send{width:46px;height:46px;border-radius:50%;border:0;background:linear-gradient(135deg,#ffb88a,#c76b9a);color:#fff;font-size:20px;cursor:pointer;flex:none;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+#send:disabled{opacity:.5;cursor:default}
+.foot2{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px}
+#toast{font-size:12.5px;min-height:18px;opacity:.95;text-shadow:0 1px 4px rgba(0,0,0,.4);flex:1}
+.fine{margin:8px 2px 0;font-size:11.5px;line-height:1.55;opacity:.95;text-shadow:0 1px 4px rgba(0,0,0,.45)}
+.bubble.prev{border-style:dashed;white-space:pre-line}
+.bubble.care{display:flex;flex-direction:column;gap:8px}
+.bubble.care ul{margin:0;padding-left:1.2em}
+.bubble.care a{color:#fff;font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.quote{border-left:3px solid #c9b7e4;margin:0 0 12px;padding:2px 0 2px 12px;color:#4d3a6a;font-size:14px;overflow-wrap:anywhere}
+@media (min-width:700px){.orb{right:calc(50% - 440px);font-size:calc(var(--os,1)*110px)}.orb2{right:calc(50% - 440px + 120px)}h1{font-size:24px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="sky" id="sky" aria-hidden="true"><div class="stars" id="stars"></div></div>
+<div class="orb" id="orb" aria-hidden="true">🌇</div>
+<div class="orb2" id="orb2" aria-hidden="true"></div>
+<div id="app">
+<header>
+  <div class="top">
+    <h1>Dusk Talk 2 🌇<small data-i18n="tagline"></small></h1>
+    <button type="button" class="gbtn lang" id="langBtn" data-demo="lang-switch" data-i18n-aria="langAria"><span id="lj">日本語</span> / <span id="le">EN</span></button>
+    <button type="button" class="gbtn" id="newBtn" data-demo="new-night" data-i18n="newNight"></button>
+  </div>
+  <button type="button" class="gbtn pill" id="pill" data-demo="sky-pill" aria-expanded="false" aria-controls="legend"><span id="pillText"></span><span class="chev" aria-hidden="true">▾</span></button>
+  <div id="legend" data-demo="sky-legend"><p data-i18n="legendHint"></p><div class="lg" id="lg"></div></div>
+</header>
+<main id="chat" role="log" aria-live="polite" data-demo="chat-area"></main>
+<footer>
+  <div id="starters" data-demo="starters"></div>
+  <form id="form" autocomplete="off">
+    <input id="msg" type="text" maxlength="300" data-demo="message-input" data-i18n-ph="placeholder" data-i18n-aria="inputAria">
+    <button type="submit" id="send" data-demo="send-button" data-i18n-aria="send">➤</button>
+  </form>
+  <div class="foot2">
+    <div id="toast" role="status" data-demo="toast"></div>
+    <button type="button" class="gbtn" id="wrapBtn" data-demo="wrap-up" data-i18n="wrap"></button>
+  </div>
+  <p class="fine" id="fine" data-i18n="fine"></p>
+</footer>
+</div>
+<script>
+const MOODS=[
+{id:'neutral',orb:'🌇',face:'💭',c:['#f59e7b','#c76b9a','#4a3a7a'],st:.3},
+{id:'tired',orb:'🌇',face:'😮‍💨',c:['#f7b267','#e0705f','#5a3470'],st:.2},
+{id:'happy',orb:'☀️',face:'😊',c:['#ffd38a','#ff9fb0','#6a7bd0'],st:0},
+{id:'sad',orb:'🌧️',face:'😢',c:['#8b93b6','#5b5f8e','#222a4e'],st:.35,gl:.08},
+{id:'anxious',orb:'☁️',face:'😰',c:['#a490b8','#6c5c9a','#2f2c55'],st:.4,gl:.12},
+{id:'angry',orb:'🔥',face:'😠',c:['#ff8a5c','#c2384f','#3a1540'],st:.1},
+{id:'lonely',orb:'🌙',face:'🥺',c:['#3a4580','#554f98','#14183a'],st:1,gl:.06},
+{id:'calm',orb:'🌄',face:'😌',c:['#f6d2bd','#a99bc9','#3f5586'],st:.1,gl:.2}
+];
+const MM={};MOODS.forEach(m=>MM[m.id]=m);
+const MIDS=['sad','anxious','angry','lonely','tired','happy','calm'];
+
+/* ---------- 1. Reading the feeling ---------- */
+// "word:weight" lists. Japanese entries match as substrings (stems, so that 嬉しくない is also seen); English entries match word starts ("word$" = exact word).
+const L=s=>s.split(',').map(x=>{const i=x.lastIndexOf(':');return [x.slice(0,i),parseFloat(x.slice(i+1))]});
+const LEX={
+ja:{
+sad:L('悲し:3,かなし:3,つらい:2.5,つらく:2.5,つらか:2.5,辛い:2.5,辛く:2.5,辛か:2.5,泣:2.5,涙:2.5,落ち込:3,凹:2.5,へこ:2.5,ショック:2.5,切な:2.5,後悔:2,憂鬱:2.5,虚し:2.5,むなし:2.5,がっかり:2,残念:1.5,情けな:2,しょんぼり:2.5,やるせ:2.5,傷つ:2.5,自己嫌悪:3,無力:2.5,失敗:1.5'),
+anxious:L('不安:3,心配:2.5,緊張:2.5,こわい:2,こわく:2,こわか:2,怖:2.5,焦:2.5,プレッシャー:2.5,ドキドキ:2,そわそわ:2,気がかり:2.5,落ち着かない:2.5,眠れない:2.5,間に合わ:2,大丈夫かな:2.5,どうしよう:2.5,ストレス:2.5,追われ:2,締め切り:1.2,締切:1.2,面接:1.2,試験:1.2,発表:1'),
+angry:L('腹が立:3,腹立:3,むかつ:3,ムカ:3,イライラ:3,いらいら:3,怒:2.5,許せない:3,納得いかない:3,理不尽:3,ありえない:2.5,うざ:2.5,キレ:2.5,頭にく:3,苛立:3,最悪:1.5,文句:1.5'),
+lonely:L('寂し:3,さびし:3,孤独:3,ひとりぼっち:3,一人ぼっち:3,ひとり:1.5,一人:1.5,独り:1.5,誰にも:2,取り残:2.5,疎外:2.5,会いたい:2,話し相手:2,静かすぎ:2'),
+tired:L('疲れ:3,つかれ:3,しんど:3,だる:2.5,眠い:2,眠く:2,ねむ:2,くたくた:3,きつい:2.5,きつく:2.5,きつか:2.5,長くて:1.5,忙し:2,いそがし:2,残業:2,限界:2.5,へとへと:3,ぐったり:3,バタバタ:1.5,余裕がな:2.5,休みたい:2.5,燃え尽き:3,消耗:3,重い:1'),
+happy:L('嬉し:3,うれし:3,楽し:3,たのし:3,最高:3,よかった:2.5,良かった:2.5,幸せ:3,しあわせ:3,やった:2.5,ありがとう:1.5,誇:2.5,わくわく:2.5,ワクワク:2.5,感動:2.5,笑顔:2,おいしかった:2,美味し:2,達成:2.5,できた:1.5,褒め:2,ほめ:2,うまくいっ:2.5,助かっ:2,感謝:2.5,気持ちよ:2,会えて:1.5,好き:1.5'),
+calm:L('穏やか:3,のんびり:3,ほっと:3,落ち着:2.5,ゆっくり:2.5,平和:3,安心:3,静かに:2,静か:1.5,リラックス:3,くつろ:3,和やか:2.5,癒:3,心地:2.5,すっきり:2.5,さっぱり:2,整っ:2,散歩:1.2,夕焼け:1.5,きれい:1,綺麗:1')
+},
+en:{
+sad:L("sad:3,cry:2.5,cried:2.5,crying:2.5,depress:3,hurt:2,upset:2,heartbroken:3,down$:1.5,disappoint:2,grief:3,grieving:3,tears:2.5,hopeless:3,empty:2.5,regret:2,ashamed:2,failed:2,failure:2,let down:2,miserable:3,gloomy:2.5"),
+anxious:L("anxious:3,anxiety:3,worried:2.5,worry:2.5,nervous:2.5,afraid:2.5,scared:2.5,stress:2.5,uneasy:2.5,panic:3,overwhelm:2.5,deadline:1.2,interview:1.2,exam:1.2,can't sleep:2.5,dread:3,tense:2"),
+angry:L("angry:3,annoyed:2.5,furious:3,irritat:2.5,frustrat:2.5,pissed:3,mad$:2.5,unfair:2.5,fed up:3,hate:2.5,resent:2.5,outrag:3,rude:1.5"),
+lonely:L("lonely:3,alone:2,left out:2.5,isolated:2.5,lonesome:3,no one:2,nobody:2,ignored:2"),
+tired:L("tired:3,exhaust:3,drained:3,sleepy:2,worn out:3,burned out:3,burnout:3,weary:3,long meeting:2,long day:2,busy:1.5,overwork:2.5,no energy:3,wiped:3"),
+happy:L("happy:3,glad:2.5,fun$:2.5,great:2,awesome:2.5,joy:3,excited:2.5,proud:2.5,thank:1.5,wonderful:2.5,love:2,grateful:2.5,amazing:2.5,good news:2.5,went well:2.5,accomplish:2.5,delighted:3,laugh:2,smile:2"),
+calm:L("calm:3,peaceful:3,relax:3,relieved:3,quiet:1.5,cozy:2.5,content:2.5,chill:2.5,at ease:3,serene:3,refreshed:2.5,comfortable:2,settled:2")
+}};
+const EMO={'😭':'sad','😢':'sad','😡':'angry','😠':'angry','😊':'happy','😆':'happy','😄':'happy','🥰':'happy','😰':'anxious','😨':'anxious','😴':'tired','😮‍💨':'tired','🥺':'lonely','😌':'calm'};
+const INT_UP=/(とても|すごく|めっちゃ|本当に|ほんとに|かなり|超|ものすごく|死ぬほど|心底|ひどく|完全に)$/;
+const INT_DOWN=/(少し|ちょっと|やや|ほんの|ちょい|なんとなく|ほんのり)$/;
+const NEG_JA=/^[てくではもがじゃか]{0,3}い?(ない|なかった|ません)/;
+const UP_EN=/^(very|so|really|extremely|super|totally|completely|incredibly|truly)$/;
+const DOWN_EN=/^(bit|little|slightly|kinda|somewhat|slight)$/;
+const NEG_EN=/^(not|no|never|hardly|without)$|n't$/;
+const END_RE=/(おやすみ|寝ます|もう寝る|ねます|また明日|今日はここまで|ここまでにする|good ?night|going to bed|go to sleep|that'?s all|i'?m done|see you tomorrow)/i;
+const TOP={
+ja:{work:'会議,仕事,上司,部下,同僚,残業,締切,締め切り,メール,会社,職場,プロジェクト,出張,取引先,お客,プレゼン,資料,業務,バイト,シフト',family:'家族,母,父,お母さん,お父さん,親,子ども,子供,息子,娘,妻,夫,兄,姉,弟,妹,祖母,祖父,実家,旦那',friends:'友だち,友達,友人,飲み会,仲間,同級生,会えて',partner:'恋人,彼氏,彼女,パートナー,デート',health:'体調,頭痛,眠れ,病院,風邪,熱,腰,肩こり,薬,ダイエット,寝不足',study:'勉強,試験,宿題,授業,学校,レポート,テスト,受験,論文',future:'明日,あした,来週,将来,これから,面接,発表,予定,転職',self:'自分,自己嫌悪,性格',rest:'散歩,夕焼け,お風呂,コーヒー,カフェ,映画,音楽,料理,ごはん,ご飯,猫,犬',money:'お金,給料,支払い,ローン,貯金,出費,家賃'},
+en:{work:'meeting,work,boss,colleague,coworker,office,deadline,project,client,email,shift,presentation',family:'family,mom,mother,dad,father,parents,son,daughter,wife,husband,brother,sister,kids',friends:'friend,party,hangout',partner:'boyfriend,girlfriend,partner,date,spouse',health:'sick,headache,sleep,doctor,pain,cold,diet',study:'study,exam,homework,class,school,test,essay,thesis',future:'tomorrow,next week,future,interview,plan,job search',self:'myself',rest:'walk,sunset,bath,coffee,book,movie,music,cooking,dog,cat',money:'money,salary,rent,bill,debt,savings'}
+};
+const CRISIS={
+ja:['死にたい','しにたい','死んでしまいたい','消えたい','きえたい','いなくなりたい','自殺','生きていたくな','生きるのがつらい','人生を終わり','命を絶','自分を傷つ','リストカット'],
+en:['suicide','suicidal','kill myself','want to die','end my life','end it all','self-harm','hurt myself','don’t want to live','don\'t want to live','better off dead']
+};
+
+const normT=t=>t.replace(/[’‘]/g,"'");
+function hash(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))%100003;return h}
+function trimC(t){return t.replace(/^[、,，\s]+/,'').replace(/[、,，。.\s…~〜!！?？]+$/,'')}
+
+function clauseList(text){
+  const parts=text.split(/(けれども|けれど|けど|ですが|しかし|でも|ただ|\bbut\b|\bhowever\b|\balthough\b|[。！？!?\n]+)/i);
+  const out=[];let aft=false;
+  parts.forEach(p=>{
+    if(!p)return;
+    if(/^(けれども|けれど|けど|ですが|しかし|でも|ただ|but|however|although)$/i.test(p)){aft=true;return}
+    if(/^[。！？!?\n]+$/.test(p))return;
+    const t=p.trim();if(!t)return;
+    out.push({t:t,aft:aft});aft=false;
+  });
+  return out;
+}
+// Score one clause: weighted words, with negation ("not tired"), intensity ("very", "a bit") and emoji.
+function scoreClause(raw){
+  const sc={};const add=(id,w)=>{sc[id]=(sc[id]||0)+w};
+  const neg=(id,w)=>{if(id==='calm')add('anxious',.5*w);else if(id==='happy')add('sad',.5*w);else add('calm',.4*w)};
+  const low=normT(raw).replace(/お疲れ(様|さま)?|おつかれ(様|さま)?/g,'').replace(/(ひとり|一人|独り)(?=になりたい|になれ|の時間|で(?!抱え|悩|泣|苦し|辛|つら|寂し|さびし|耐え|過ごすのが))/g,'').toLowerCase();
+  const toks=low.match(/[a-z']+/g)||[];
+  MIDS.forEach(id=>{
+    LEX.ja[id].forEach(kv=>{
+      const k=kv[0],w=kv[1];let i=low.indexOf(k);
+      while(i>=0){
+        const b=low.slice(Math.max(0,i-5),i),a=low.slice(i+k.length,i+k.length+9);
+        let ww=w;if(INT_UP.test(b))ww*=1.5;else if(INT_DOWN.test(b))ww*=.6;
+        if(NEG_JA.test(a))neg(id,ww);else add(id,ww);
+        i=low.indexOf(k,i+k.length);
+      }
+    });
+    LEX.en[id].forEach(kv=>{
+      const k=kv[0],w=kv[1],hits=[];
+      if(k.indexOf(' ')>=0){let p=low.indexOf(k);while(p>=0){hits.push((low.slice(0,p).match(/[a-z']+/g)||[]).slice(-3));p=low.indexOf(k,p+k.length)}}
+      else{const ex=k.slice(-1)==='$',kk=ex?k.slice(0,-1):k;toks.forEach((tk,j)=>{if(ex?tk===kk:tk.indexOf(kk)===0)hits.push(toks.slice(Math.max(0,j-3),j))})}
+      hits.forEach(pre=>{
+        let ww=w;const l2=pre.slice(-2);
+        if(l2.some(x=>UP_EN.test(x)))ww*=1.5;else if(l2.some(x=>DOWN_EN.test(x)))ww*=.6;
+        if(pre.some(x=>NEG_EN.test(x)))neg(id,ww);else add(id,ww);
+      });
+    });
+  });
+  for(const e in EMO)if(raw.indexOf(e)>=0)add(EMO[e],2);
+  return sc;
+}
+function topicsOf(text){
+  const low=text.toLowerCase().replace(/大丈夫/g,'');const toks=low.match(/[a-z']+/g)||[];const cnt={};
+  Object.keys(TOP.ja).forEach(id=>{
+    TOP.ja[id].split(',').forEach(k=>{if(low.indexOf(k)>=0)cnt[id]=(cnt[id]||0)+1});
+    TOP.en[id].split(',').forEach(k=>{
+      if(k.indexOf(' ')>=0){if(low.indexOf(k)>=0)cnt[id]=(cnt[id]||0)+1}
+      else if(toks.some(t=>t===k||t===k+'s'))cnt[id]=(cnt[id]||0)+1;
+    });
+  });
+  return Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]).slice(0,2);
+}
+function isSkip(t){
+  const s=normT(t).toLowerCase();if(s.length>30)return false;
+  return /(いまはいい|今はいい|考えなくて|いまはやめ|今はやめ)/.test(s)||/(not now|no thanks|skip (it|this)|i'?d rather not)/.test(s);
+}
+function isNonAnswer(t){
+  const s=normT(t).toLowerCase();if(s.length>30)return false;
+  if(isSkip(t))return true;
+  return /(わからな|分からな|わかんな|特にな|特に何も|思いつかな|思い浮かばな|言葉にならな|うーん|別に)/.test(s)||/(i don'?t know|dunno|\bidk\b|not sure|nothing|no idea|can'?t think|hard to say)/.test(s);
+}
+function echoOf(cl){
+  let best='',bs=0;
+  cl.forEach(c=>{const t=trimC(c.t);if(t.length<5||t.length>26)return;const s=c.cs||0;if(s>bs){bs=s;best=t}});
+  if(!best){cl.forEach(c=>{const t=trimC(c.t);if(t.length<27||t.length>40)return;const s=c.cs||0;if(s>bs){bs=s;best=t}})}
+  return best;
+}
+// The whole reading of one message.
+function analyze(text){
+  const cl=clauseList(text),tot={};
+  cl.forEach((c,i)=>{
+    const sc=scoreClause(c.t);const wgt=(c.aft?1.4:1)*(cl.length>1&&i===cl.length-1?1.15:1);
+    let cs=0;for(const id in sc){tot[id]=(tot[id]||0)+sc[id]*wgt;cs+=sc[id]}
+    c.cs=cs;c.sc=sc;
+  });
+  const ranked=MIDS.map(id=>[id,tot[id]||0]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
+  const top=ranked[0];
+  const p=top&&top[1]>=1.2?top[0]:'neutral';
+  const sec=ranked[1];
+  const s=(p!=='neutral'&&sec&&sec[1]>=Math.max(1.2,.5*top[1]))?sec[0]:null;
+  let vec={};
+  if(p==='neutral')vec={neutral:.05};
+  else{
+    const used=ranked.slice(0,3).filter(x=>x[1]>=1.2),sum=used.reduce((a,x)=>a+x[1],0),mass=.7+.5*Math.min(1,top[1]/4);
+    used.forEach(x=>{vec[x[0]]=x[1]/sum*mass});
+  }
+  // which of the two feelings comes later in the message (it is the one that ends the sentence)
+  let lm=p;
+  if(s){for(let i=cl.length-1;i>=0;i--){const q=cl[i].sc||{},x=q[p]||0,y=q[s]||0;if(x>0||y>0){lm=y>x?s:p;break}}}
+  const mn=text.match(/(?:^|[^\d])(\d{1,2})(?!\d)/);
+  const num=mn&&parseInt(mn[1],10)<=10?parseInt(mn[1],10):null;
+  return {p:p,s:s,lm:lm,vec:vec,int:p==='neutral'?0:Math.min(1,top[1]/7),tp:topicsOf(text),len:text.length,cl:cl,
+    nonAnswer:p==='neutral'&&isNonAnswer(text),end:END_RE.test(text),num:num,echo:echoOf(cl)};
+}
+function isCrisis(text){
+  const low=text.toLowerCase();
+  return CRISIS.ja.some(k=>low.includes(k))||CRISIS.en.some(k=>low.includes(k));
+}
+
+/* ---------- 2. The sky: a blend of the feelings so far ---------- */
+let lang='en',msgs=[],cur='neutral',busy=false,hinted=false,toastT=null,nudgeT=null;
+let skyFlip=0,skyT=null,curMix=[['neutral',1]],curInt=0;
+const $=s=>document.querySelector(s);
+const chat=$('#chat');
+function foldMix(){
+  let S={};
+  msgs.forEach(m=>{
+    if(m.r!=='u')return;
+    const v=m.v||{[m.m||'neutral']:1},nx={},f=Object.keys(v).some(k=>k!=='neutral')?.5:.9;
+    for(const k in S)nx[k]=S[k]*f;
+    for(const k in v)nx[k]=(nx[k]||0)+v[k];
+    S=nx;
+  });
+  return S;
+}
+function mixOf(S){
+  const r=Object.keys(S).map(k=>[k,S[k]]).sort((a,b)=>b[1]-a[1]);
+  if(!r.length)return [['neutral',1]];
+  const out=[r[0]];
+  if(r[1]&&r[1][0]!=='neutral'&&r[1][1]>=.35*r[0][1])out.push(r[1]);
+  return out;
+}
+function sessionMood(){
+  const S=foldMix(),r=Object.keys(S).filter(k=>k!=='neutral').sort((a,b)=>S[b]-S[a]);
+  return r.length&&S[r[0]]>=.5?r[0]:'neutral';
+}
+function hexRgb(h){return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)]}
+function rgba(hex,a){const c=hexRgb(hex);return 'rgba('+c[0]+','+c[1]+','+c[2]+','+a.toFixed(2)+')'}
+// The main feeling paints the sky; a second feeling is blended into every stop of it. All palettes are dusk-family colors, so the blend stays a sunset, never a gray.
+function mixHex(a,b,t){const x=hexRgb(a),y=hexRgb(b);return '#'+[0,1,2].map(k=>Math.round(x[k]+(y[k]-x[k])*t).toString(16).padStart(2,'0')).join('')}
+function gradOf(mix,deg){
+  const P=MM[mix[0][0]];let c=P.c,gl=P.gl===undefined?.16:P.gl;
+  if(mix.length>1){
+    const S=MM[mix[1][0]],t=Math.min(.45,mix[1][1]/(mix[0][1]+mix[1][1])*.9);
+    c=P.c.map((h,k)=>mixHex(h,S.c[k],t));gl=gl+(((S.gl===undefined?.16:S.gl)-gl)*t);
+  }
+  const base='linear-gradient('+(deg||'180deg')+','+c[0]+','+c[1]+' 58%,'+c[2]+')';
+  return 'radial-gradient(150% 38% at 50% 74%,'+rgba('#ffb48c',gl)+',rgba(255,180,140,0) 72%),'+base;
+}
+function buildSky(){
+  const sky=$('#sky'),st=$('#stars');
+  ['A','B'].forEach(k=>{const d=document.createElement('div');d.className='sky-layer';d.id='sky'+k;sky.insertBefore(d,st)});
+}
+function setMix(mix,int){
+  curMix=mix;curInt=int||0;cur=mix[0][0];
+  const sky=$('#sky'),els=[$('#skyA'),$('#skyB')],nx=els[skyFlip^1],cu=els[skyFlip];
+  nx.style.transition='none';nx.classList.remove('on');nx.style.background=gradOf(mix);
+  sky.insertBefore(nx,$('#stars'));
+  void nx.offsetWidth;nx.style.transition='';nx.classList.add('on');
+  clearTimeout(skyT);skyT=setTimeout(()=>{cu.classList.remove('on')},1900);
+  skyFlip^=1;
+  const tot=mix.reduce((a,x)=>a+x[1],0)||1;
+  $('#stars').style.opacity=mix.reduce((a,x)=>a+MM[x[0]].st*x[1],0)/tot;
+  $('#orb').textContent=MM[mix[0][0]].orb;
+  const o2=$('#orb2');
+  if(mix[1]){o2.textContent=MM[mix[1][0]].orb;o2.style.display='block'}else o2.style.display='none';
+  document.documentElement.style.setProperty('--os',(1+.25*curInt).toFixed(2));
+  updatePill();
+}
+function T(){return I18N[lang]}
+function fmt(s,o){return s.replace(/\{(\w+)\}/g,(_,k)=>o[k]===undefined?'':o[k])}
+function skyNames(mix){const d=T();return mix.map(x=>d.mood[x[0]][1]).join(d.plus)}
+function updatePill(){
+  const d=T(),names=curMix.map(x=>d.mood[x[0]][0]).join(d.plus);
+  $('#pillText').textContent=MM[curMix[0][0]].orb+' '+fmt(d.skyLabel,{m:names,s:skyNames(curMix)});
+}
+
+/* ---------- 3. Text ---------- */
+const I18N={
+ja:{
+title:'Dusk Talk 2｜夕暮れの対話',tagline:'夕暮れに、そっと話そう',newNight:'🔄 新しい夜',langAria:'言語を切り替える：日本語 / English',
+placeholder:'ここに気持ちを書いてみて…',inputAria:'今日のことを書く',send:'送信',wrap:'🌙 今日をしめくくる',
+skyLabel:'今の気持ちの空：{m}＝{s}',legendHint:'気持ちと空の色の組み合わせ。タップで空を見てみよう',
+sensed:'気持ち：{m} を感じ取りました',typing:'考えています',plus:'＋',dot:'・',and:'や',
+greet:'おつかれさま。今日はどんな一日でしたか？',
+starters:['今日は会議が長くて疲れた','友だちに会えて嬉しかった','明日のことが少し不安','ひとりで静かな夜になった'],
+toastEmpty:'ひとことだけでも、書いてみてね。',toastMore:'もう少しお話ししてから、しめくくりましょう。',
+toastHint:'そろそろ、今日をしめくくってみませんか？ 🌙',toastNew:'新しい夜をはじめました。',
+nudge:'ゆっくりで大丈夫です。下の選択肢を押して答えることもできます。',
+sumTitle:'今夜の空',sumLine:'今日のひとこと',sumMoods:'今日、感じ取った気持ち',sumTalked:'{n}回、言葉にしました。',sumTmr:'明日のあなたへ',sumNew:'🌙 新しい夜をはじめる',sumGood:'おやすみなさい',
+copy:'ひとことをコピー',copied:'コピーしました',copyFail:'コピーできませんでした',
+fine:'Dusk Talkは、気持ちを言葉にして、ひと息つくための場です。医療やカウンセリングの代わりにはならず、効果を保証するものでもありません。つらさが続くときは、身近な人や専門の窓口へ。会話はこの端末にだけ保存されます。',
+skip:['もちろん、無理しなくて大丈夫です。','はい、今夜はそのままで大丈夫です。'],
+rest:['ここまで、ちゃんと聞いていますよ。続きがあれば、そのまま書いてくださいね。言葉にならなければ、ここまでで大丈夫です。','いまは答えなくて大丈夫です。話したくなったら、続きをどうぞ。'],
+recap1:'ここまでをそっとまとめると、{a}が大きかった一日のようですね。',
+recap2:'ここまでをそっとまとめると、{a}と{b}の両方があった一日のようですね。',
+recapQ:'「{q}」という言葉も、心に残っているようです。',
+prevLead:'前の夜に決めた「明日の一歩」：',prevAsk:'試せていたら、教えてくださいね。できなかった日があっても大丈夫です。',
+careHead:'話してくれて、ありがとう。いま、とてもつらいのかもしれませんね。',
+careBody:'ひとりで抱えなくて大丈夫です。わたしは話し相手にはなれますが、あなたを支える専門の人の代わりにはなれません。',
+careHelp:'いのちの危険を感じるときは、110番か119番へ。話を聞いてほしいときは、こちらへ。',
+careLines:[['よりそいホットライン（24時間・無料）','0120-279-338'],['いのちの電話（毎日16時〜21時・無料）','0120-783-556']],
+careTail:'近くに信頼できる人がいれば、その人にも声をかけてみてください。ここで、もう少し話していても大丈夫です。',
+closeAsk:'ここまで話してくれて、ありがとう。今日をしめくくりましょうか？',more:'もう少し話す',moreSend:'もう少し話したいです',
+scLow:'小さめなんですね。',scMid:'ちょうど真ん中くらいなんですね。',scHigh:'大きいですね。それだけ、心が動いた一日だったのですね。',
+na:['わからないままで大丈夫です。','言葉にならないときも、ありますよね。'],
+mix:'{a}もあるけれど、{b}もあるんですね。',
+echo:'「{q}」。そのことが、今日の心に残っているんですね。',
+cb:'さっきの「{q}」という言葉も、まだ心のどこかにありそうですね。',
+flowTp:'今日は、{t}のことが心を動かした一日でした。',
+flowArc:'{a}から{b}へと、心の空が移っていった夜でした。',
+arcUp:'{a}から始まって、{b}にたどりついた夜。「{q}」――その変化を、覚えておいてください。',
+topic:{work:'仕事',family:'家族',friends:'友だち',partner:'大切な人',health:'体調',study:'勉強',future:'これから',self:'自分',rest:'休みの時間',money:'お金'},
+mood:{neutral:['静かな思い','たそがれ'],tired:['疲れ','夕焼け'],happy:['嬉しさ','夜明け'],sad:['かなしみ','雨空'],anxious:['不安','霞む空'],angry:['いらだち','燃える空'],lonely:['さびしさ','月夜'],calm:['安らぎ','凪の朝']},
+close:{
+neutral:'静かに今日を見つめた夜でした。言葉にしただけで、気持ちは少し整います。',
+tired:'今日はたくさん力を使いましたね。夕焼けの色のまま、ゆっくり休んでください。',
+happy:'うれしい光が残る一日でしたね。その明るさを、そっと胸にしまって眠りましょう。',
+sad:'つらさを言葉にできたのは、とても大切なことです。雨のあとには、静かな朝が来ます。',
+anxious:'気がかりを外に出せましたね。霞んだ空も、夜が深まればすこしずつ晴れていきます。',
+angry:'まっすぐな気持ちがあった一日でした。燃えた空も、やがて静かな夜になります。',
+lonely:'さびしさを話してくれてありがとう。月はいつも、同じ空で見守っています。',
+calm:'穏やかな時間を味わえた一日でした。その凪を、明日にも少し持っていきましょう。'},
+tmr:{
+neutral:'朝いちばんに、今日の気づきをひとつ思い出してみて。',
+tired:'明日は、ひと息つく時間を5分だけ先に予定に入れてみましょう。',
+happy:'今日の嬉しかったことを、誰かにひとこと伝えてみましょう。',
+sad:'明日は、自分に優しいことをひとつだけ選んでみましょう。',
+anxious:'気がかりを、明日できる小さな一歩に分けてみましょう。',
+angry:'まず深呼吸をひとつ。伝えたいことは、短く一文にしてみましょう。',
+lonely:'明日、誰かに「おはよう」を送ってみましょう。',
+calm:'今日の穏やかさを思い出す、お気に入りの合図を決めておきましょう。'},
+line:{
+neutral:['「{q}」。言葉にした今夜の静けさを、そのまま持って眠りましょう。','「{q}」。それを言葉にできた今夜を、大切に。'],
+tired:['「{q}」と言葉にできた今日の自分に、おつかれさま。','「{q}」。それだけ力を使った証です。今夜は、ゆっくり休んでください。'],
+happy:['「{q}」。その光を胸にしまって、おやすみなさい。','「{q}」と思えた今日は、いい一日でした。'],
+sad:['「{q}」と言えたことが、もう小さな一歩です。','「{q}」。つらさのそばに、ちゃんと自分がいます。'],
+anxious:['「{q}」。気がかりを外に出せた今夜は、少し軽くなっているかもしれません。','「{q}」と書けた今、不安の輪郭は少しやわらいでいるかもしれません。'],
+angry:['「{q}」と感じるほど、大切にしたいものがあったのですね。','「{q}」。まっすぐな気持ちを、今日はちゃんと受けとめました。'],
+lonely:['「{q}」と話してくれて、ありがとう。月は今夜も、同じ空にいます。','「{q}」。そのさびしさごと、今夜はここに置いていって大丈夫です。'],
+calm:['「{q}」。その穏やかさを、明日にも少し連れていきましょう。','「{q}」と感じられた今日の静けさを、覚えておいてください。']},
+rp:{
+neutral:{emp:['話してくれてありがとう。','うん、聞いていますよ。'],ins:['言葉にしてみるだけで、輪郭が少しはっきりしてきますね。']},
+tired:{emp:['それはおつかれさまでした。','がんばった一日でしたね。'],ins:['それだけ長く、気を張っていたのかもしれませんね。','疲れは、がんばった分だけ残るものです。']},
+happy:{emp:['それは素敵ですね。','聞いていて、わたしも嬉しくなりました。'],ins:['嬉しい気持ちは、あなたが大切にしているものを教えてくれます。']},
+sad:{emp:['それは、つらかったですね。','ここでは、無理に元気にならなくて大丈夫です。'],ins:['悲しさは、大切にしていたものがあった証かもしれません。']},
+anxious:{emp:['気がかりがあると、落ち着かないですよね。','話してくれてありがとう。'],ins:['不安は、先のことを大切に考えているから生まれることもあります。']},
+angry:{emp:['それは腹が立ちますよね。','その怒りには、きっと理由がありますね。'],ins:['怒りの奥には、守りたいものがあることが多いです。']},
+lonely:{emp:['ひとりの夜は、静かすぎることもありますね。','話してくれて、ありがとう。いまはここにいますよ。'],ins:['さびしさは、つながりを大切に思う気持ちの裏返しかもしれません。']},
+calm:{emp:['穏やかな時間があったのですね。','それは、いい夜ですね。'],ins:['穏やかな時間は、心が自分を取り戻している合図かもしれません。']}},
+Q:{
+scene:{b:['その中で、いちばん心に残っている場面はどこですか？','{t}のことで、特に印象に残っているのはどんなことですか？'],mv:{happy:['何が、いちばん嬉しかったのでしょう？','その場面を、もう少し教えてください。'],angry:['何が、いちばん引っかかったのでしょう？','そのとき、何が起きていたのか聞かせてください。'],lonely:['そう感じたのは、どんなときでしたか？']}},
+label:{b:['選んでも、自分の言葉で書いても大丈夫です。いま、いちばん近い気持ちはどれでしょう？']},
+weather:{b:['いまの心を空にたとえるなら、どんな空でしょう？']},
+body:{b:['肩、胸、お腹のあたりなど、体のほうはどんな感じですか？']},
+scale:{b:['その気持ちの大きさを、0〜10で言うと、いまどのくらいですか？']},
+need:{b:['いまのあなたに、いちばん足りないのは、どれに近いですか？'],mv:{angry:['そのとき、本当は何を分かってほしかったですか？'],lonely:['いま、誰かの声が聞けるとしたら、誰の声でしょう？']}},
+meaning:{b:['それがここまで心に残ったのは、あなたが何を大切にしているからだと思いますか？','もう少し深く見ると、その気持ちは何を求めているのでしょう？'],mv:{happy:['それが嬉しかったのは、あなたの何を大切にしている部分に触れたからでしょう？'],calm:['その穏やかさは、何から生まれたのだと思いますか？']}},
+spark:{b:['そんな中でも、ほんの少しでもほっとした瞬間はありましたか？'],mv:{happy:['その瞬間を、もう少し味わってみましょう。何が見えて、何が聞こえていましたか？'],calm:['その静けさの中で、何が見えて、何が聞こえていましたか？']}},
+friend:{b:['もし大切な友だちが同じことを話してくれたら、あなたはどんな言葉をかけますか？']},
+proud:{b:['そんな一日の中で、自分をねぎらいたいところはありますか？']},
+tomorrow:{b:['あした、5分だけ自分のためにできることがあるとしたら、何でしょう？']},
+share:{b:['その嬉しさを誰かに伝えるなら、誰に、どんなふうに伝えたいですか？']},
+detail:{b:['それは、どんな瞬間でしたか？ 少しだけ聞かせてもらえますか？']}},
+QC:{
+label:{b:[['疲れ','疲れに近いです','tired'],['不安','不安に近いです','anxious'],['かなしみ','かなしみに近いです','sad'],['嬉しさ','嬉しさに近いです','happy'],['よくわからない','よくわからないです']]},
+weather:{b:[['夕焼け','夕焼けのような空です','tired'],['雨空','雨空のような気持ちです','sad'],['霞む空','霞んだ空のようです','anxious'],['月夜','月夜のような静けさです','lonely'],['凪の朝','凪の朝のような感じです','calm'],['夜明け','夜明けのような明るさです','happy']]},
+body:{mv:{
+tired:[['肩や首が重い'],['目が重い'],['体は元気で、心が疲れた']],
+anxious:[['胸がざわざわする'],['息が浅い'],['お腹が重い']],
+angry:[['体が熱い'],['肩に力が入る'],['特に何も']],
+sad:[['胸のあたりが重い'],['涙が出そう'],['特に何も']],
+lonely:[['胸がすうすうする'],['体が冷える'],['特に何も']],
+happy:[['胸があたたかい'],['肩の力が抜けた'],['特に何も']],
+calm:[['胸があたたかい'],['肩の力が抜けた'],['特に何も']],
+neutral:[['肩が重い'],['胸がざわざわする'],['特に何も']]}},
+scale:{b:[['2','2くらいです'],['5','5くらいです'],['8','8くらいです']]},
+need:{b:[['ゆっくり休むこと'],['誰かに話すこと'],['ひとりで考える時間'],['何も考えない時間']],mv:{angry:[],lonely:[]}},
+spark:{b:[['ありました'],['うまく思いつかないです']],mv:{happy:[],calm:[]}},
+tomorrow:{b:[['早めに休む'],['少し歩く'],['誰かに連絡する'],['何もしない時間'],['いまはいいです']]}}
+},
+en:{
+title:'Dusk Talk 2 | A quiet talk at dusk',tagline:'Let’s talk softly at dusk',newNight:'🔄 New night',langAria:'Switch language: 日本語 / English',
+placeholder:'Write how you feel here…',inputAria:'Write about your day',send:'Send',wrap:'🌙 Wrap up the day',
+skyLabel:'Sky of your mood: {m} = {s}',legendHint:'Each feeling has its own sky. Tap one to see it.',
+sensed:'Sensed feeling: {m}',typing:'Thinking',plus:' + ',dot:' & ',and:' and ',
+greet:'Good work today. How was your day?',
+starters:['Today’s meeting was so long and I’m tired','I’m happy I got to see my friend','I’m a little worried about tomorrow','It was a quiet, lonely night'],
+toastEmpty:'Even one word is okay. Try writing something.',toastMore:'Let’s talk a little more before we wrap up.',
+toastHint:'Shall we wrap up your day soon? 🌙',toastNew:'A new night has begun.',
+nudge:'Take your time. You can also tap one of the options below.',
+sumTitle:'Tonight’s sky',sumLine:'Today’s line',sumMoods:'Feelings I sensed today',sumTalked:'You put it into words {n} time(s).',sumTmr:'A note for tomorrow',sumNew:'🌙 Start a new night',sumGood:'Good night',
+copy:'Copy the line',copied:'Copied',copyFail:'Couldn’t copy',
+fine:'Dusk Talk is a quiet place to put your feelings into words and catch your breath. It is not a medical or counseling service, and it makes no promise of results. If the heaviness lasts, please reach out to someone close or to a professional. Your talks stay on this device only.',
+skip:['Of course, no need to push.','That’s fine — tonight can stay just as it is.'],
+rest:['I’m listening. If there’s more, just write it. If there aren’t words, this is enough for tonight.','You don’t have to answer right now. Come back to it whenever you like.'],
+recap1:'If I gently sum it up so far, {a} was the big one today.',
+recap2:'If I gently sum it up so far, there was both {a} and {b} today.',
+recapQ:'“{q}” also seems to have stayed with you.',
+prevLead:'The small step you set last time: ',prevAsk:'If you got to try it, I’d love to hear. If not, that’s okay too.',
+careHead:'Thank you for telling me. This sounds really heavy right now.',
+careBody:'You don’t have to carry it alone. I can keep you company, but I can’t replace someone trained to help.',
+careHelp:'If you may be in danger, please call your local emergency number. If you’d like to talk with someone:',
+careLines:[['US: Suicide & Crisis Lifeline (call or text)','988'],['Japan: Yorisoi Hotline (24 hours, free)','0120-279-338'],['Other countries: findahelpline.com','']],
+careTail:'If there is someone you trust nearby, consider reaching out to them too. You’re welcome to keep talking here.',
+closeAsk:'Thank you for talking tonight. Shall we wrap up your day?',more:'Talk a bit more',moreSend:'I’d like to talk a bit more',
+scLow:'That’s on the smaller side.',scMid:'Right around the middle, then.',scHigh:'That’s big. It must have moved you a lot today.',
+na:['It’s okay not to know.','Sometimes there aren’t words yet.'],
+mix:'There’s some {a}, and some {b} too.',
+echo:'“{q}”. That’s what stayed with you today.',
+cb:'And earlier you said “{q}” — that still seems to be somewhere in your heart.',
+flowTp:'Today, {t} moved your heart.',
+flowArc:'Your sky moved from {a} to {b} tonight.',
+arcUp:'You started with {a} and ended with {b}. “{q}” — remember that change.',
+topic:{work:'work',family:'family',friends:'your friends',partner:'someone close to you',health:'your health',study:'studying',future:'the days ahead',self:'yourself',rest:'your time off',money:'money'},
+mood:{neutral:['Quiet thoughts','Dusk'],tired:['Tired','Sunset'],happy:['Joy','Sunrise'],sad:['Sadness','Rainy sky'],anxious:['Anxiety','Hazy sky'],angry:['Anger','Ember sky'],lonely:['Loneliness','Moonlit night'],calm:['Calm','Still dawn']},
+close:{
+neutral:'You looked at your day quietly tonight. Putting it into words already helps your heart settle.',
+tired:'You used a lot of energy today. Rest slowly, in the colors of the sunset.',
+happy:'A day with a warm glow. Tuck that brightness into your heart and sleep well.',
+sad:'It matters that you could say what hurt. After the rain, a quiet morning comes.',
+anxious:'You let your worries out. Even a hazy sky clears bit by bit as the night deepens.',
+angry:'You had strong feelings today. Even a burning sky turns into a calm night.',
+lonely:'Thank you for sharing your loneliness. The moon is always watching in the same sky.',
+calm:'You were able to enjoy a peaceful time. Carry a little of that calm into tomorrow.'},
+tmr:{
+neutral:'First thing tomorrow, remember one thing you noticed today.',
+tired:'Tomorrow, put a 5-minute break on your schedule before anything else.',
+happy:'Tell someone about what made you happy today.',
+sad:'Tomorrow, pick just one kind thing to do for yourself.',
+anxious:'Break your worry into one small step you can take tomorrow.',
+angry:'Take one deep breath first. Then try saying what you need in one short sentence.',
+lonely:'Tomorrow, send someone a simple “good morning.”',
+calm:'Choose a small favorite signal that brings today’s calm back.'},
+line:{
+neutral:['“{q}”. Carry tonight’s quiet, just as it is, into sleep.','“{q}”. Thank you for putting that into words tonight.'],
+tired:['You could say “{q}” today. Thank you for your hard work.','“{q}”. That’s how much you gave today. Rest slowly tonight.'],
+happy:['“{q}”. Tuck that light into your heart and sleep well.','Being able to say “{q}” makes this a good day.'],
+sad:['Saying “{q}” is already a small step.','“{q}”. Beside the hurt, you’re still here with yourself.'],
+anxious:['“{q}”. Letting that worry out may have made tonight a little lighter.','Having written “{q}”, the worry may feel a little less sharp.'],
+angry:['To feel “{q}”, there must be something you care about.','“{q}”. Your honest feelings were heard today.'],
+lonely:['Thank you for telling me “{q}”. The moon is in the same sky tonight.','“{q}”. You can leave that loneliness here tonight.'],
+calm:['“{q}”. Carry a little of that calm into tomorrow.','Remember tonight’s stillness — “{q}”.']},
+rp:{
+neutral:{emp:['Thank you for sharing.','Mm, I’m listening.'],ins:['Just putting it into words already makes it a little clearer.']},
+tired:{emp:['Thank you for your hard work today.','You gave a lot today.'],ins:['Maybe you’ve been holding yourself together for a long time.','Tiredness stays in proportion to how much you gave.']},
+happy:{emp:['That sounds lovely.','I felt happy just hearing that.'],ins:['Joy shows us what we care about.']},
+sad:{emp:['That sounds really hard.','You don’t have to cheer up here.'],ins:['Sadness can be a sign that something mattered to you.']},
+anxious:{emp:['It’s hard to relax when something is on your mind.','Thank you for telling me.'],ins:['Worry sometimes comes from caring about what’s ahead.']},
+angry:{emp:['That would make me angry too.','There must be a reason behind that anger.'],ins:['Behind anger there is often something you want to protect.']},
+lonely:{emp:['A night alone can feel too quiet.','Thank you for telling me. I’m here with you now.'],ins:['Loneliness can be the other side of caring about connection.']},
+calm:{emp:['So you had a peaceful moment.','That sounds like a good night.'],ins:['A calm moment can be a sign your heart is finding its way back to you.']}},
+Q:{
+scene:{b:['Which moment stays with you the most?','What’s on your mind about {t}?'],mv:{happy:['What made you happiest?','Tell me a bit more about that moment.'],angry:['What caught on you the most?','Tell me what was happening at that moment.'],lonely:['When did you start feeling that way?']}},
+label:{b:['You can pick one or write it in your own words. Which feeling is closest right now?']},
+weather:{b:['If your heart were a sky right now, what kind of sky would it be?']},
+body:{b:['Maybe in your shoulders, chest, or stomach \u2014 how does your body feel?']},
+scale:{b:['On a scale of 0 to 10, how big is that feeling right now?']},
+need:{b:['What do you need the most right now?'],mv:{angry:['What did you really want them to understand?'],lonely:['If you could hear someone’s voice now, whose would it be?']}},
+meaning:{b:['What do you think it says about what you care about?','If you look a little deeper, what is that feeling asking for?'],mv:{happy:['What part of you did that joy touch?'],calm:['Where do you think that calm came from?']}},
+spark:{b:['Even so, was there a moment, however small, that felt a bit lighter?'],mv:{happy:['Let’s savor that moment a little. What did you see and hear?'],calm:['In that quiet, what did you see and hear?']}},
+friend:{b:['If a dear friend told you the same thing, what would you say to them?']},
+proud:{b:['In a day like this, is there something you’d like to thank yourself for?']},
+tomorrow:{b:['If you had five minutes for yourself tomorrow, what would you do?']},
+share:{b:['If you shared this joy with someone, who would it be and what would you say?']},
+detail:{b:['What was that moment like? Would you tell me a little?']}},
+QC:{
+label:{b:[['Tired','Closest to tired','tired'],['Anxious','Closest to anxious','anxious'],['Sad','Closest to sad','sad'],['Joyful','Closest to joy','happy'],['Not sure','I’m not sure']]},
+weather:{b:[['Sunset','A sunset sky','tired'],['Rainy sky','A rainy sky','sad'],['Hazy sky','A hazy sky','anxious'],['Moonlit night','A moonlit night','lonely'],['Still dawn','A still dawn','calm'],['Sunrise','A sunrise sky','happy']]},
+body:{mv:{
+tired:[['Heavy shoulders or neck'],['Heavy eyes'],['Body’s fine, mind is tired']],
+anxious:[['Fluttering chest'],['Shallow breath'],['Heavy stomach']],
+angry:[['Feeling hot'],['Tense shoulders'],['Nothing in particular']],
+sad:[['Heavy chest'],['Close to tears'],['Nothing in particular']],
+lonely:[['Hollow chest'],['Feeling cold'],['Nothing in particular']],
+happy:[['Warm chest'],['Shoulders relaxed'],['Nothing in particular']],
+calm:[['Warm chest'],['Shoulders relaxed'],['Nothing in particular']],
+neutral:[['Heavy shoulders'],['Fluttering chest'],['Nothing in particular']]}},
+scale:{b:[['2','About 2'],['5','About 5'],['8','About 8']]},
+need:{b:[['Rest'],['Talking to someone'],['Time to think alone'],['Time to switch off']],mv:{angry:[],lonely:[]}},
+spark:{b:[['Yes, there was'],['Can’t think of one']],mv:{happy:[],calm:[]}},
+tomorrow:{b:[['Rest early'],['A short walk'],['Reach out to someone'],['Do nothing for a bit'],['Not now']]}}
+}};
+
+/* ---------- 4. Talking: what to say next ---------- */
+const PREF={
+neutral:['label','weather','body','scene'],
+tired:['scene','body','spark','need','proud','tomorrow'],
+anxious:['scene','scale','body','friend','need','tomorrow'],
+sad:['scene','body','meaning','spark','friend','tomorrow'],
+angry:['scene','need','body','meaning','tomorrow'],
+lonely:['scene','meaning','need','spark','tomorrow'],
+happy:['scene','spark','meaning','share','tomorrow'],
+calm:['scene','meaning','spark','body','tomorrow']};
+const POOL=['meaning','friend','proud','body','spark','need'];
+const HEAVY=['sad','anxious','angry','lonely'],POS=['spark','proud','share'];
+function firstFree(list,asked){for(let i=0;i<list.length;i++)if(asked.indexOf(list[i])<0)return list[i];return null}
+function userRecs(){return msgs.filter(m=>m.r==='u')}
+function lastTopic(){for(let i=msgs.length-1;i>=0;i--){const m=msgs[i];if(m.r==='u'&&m.tp&&m.tp[0])return m.tp[0]}return ''}
+function firstQuote(us,cur){
+  for(let i=0;i<us.length;i++){const m=us[i];if(m.ch||m.c||m.na)continue;const e=analyze(m.t).echo;if(e&&e!==cur)return e}
+  return '';
+}
+// Decide the shape of the next reply. The record only holds choices (not text), so it can be shown in either language.
+function planReply(text,an){
+  const us=userRecs(),n=us.length,bots=msgs.filter(m=>m.r==='b');
+  const lastB=bots.length?bots[bots.length-1]:null;
+  const asked=bots.slice(-3).map(b=>b.qt);
+  const ctx=an.p!=='neutral'?an.p:sessionMood();
+  const seed=hash(text)+n*7;
+  const rec={r:'b',mood:an.p,mood2:an.s,lm:an.lm,cm:ctx,tp:an.tp[0]||lastTopic(),e:seed,qv:Math.floor(seed/3)};
+  if(lastB&&lastB.ak==='emp'&&lastB.mood===an.p&&lastB.e%2===rec.e%2)rec.e++;
+  if(lastB&&lastB.qt==='scale'&&an.num!==null&&an.len<=14){rec.ak='sc';rec.sv=an.num}
+  else if(an.nonAnswer)rec.ak='na';
+  else if(an.p!=='neutral'&&an.s)rec.ak='mix';
+  else rec.ak='emp';
+  if(isSkip(text)&&rec.ak!=='sc')rec.ak='skip';
+  const heavy=HEAVY.indexOf(ctx)>=0;
+  const listening=(rec.ak==='emp'||rec.ak==='mix');
+  if(rec.ak==='skip')rec.noq=1;
+  if(listening){
+    if(n===1&&rec.ak==='emp'&&an.echo&&(an.cl.length>=2||an.len>=25)){rec.ex='echo';rec.eq=an.echo}
+    else if(n===2)rec.ex='ins';
+    else if(n===3){const q=firstQuote(us.slice(0,-1),an.echo);if(q){rec.ex='cb';rec.eq=q}else if(!bots.some(b=>b.ex==='ins'))rec.ex='ins'}
+  }
+  // A small recap, once a night: say back what was heard before asking anything more.
+  if(listening&&n>=3&&!an.end&&!bots.some(b=>b.sm)){
+    const mx=mixOf(foldMix());
+    if(mx[0][0]!=='neutral'){rec.sm=1;rec.sa=mx[0][0];if(mx[1])rec.sb=mx[1][0];const q=firstQuote(us,an.echo);if(q)rec.sq=q;delete rec.ex;delete rec.eq}
+  }
+  // Some turns only receive what was said: no question at all. After a long, heavy message, and every third turn.
+  if(listening&&!rec.sm&&!an.end&&n>=2&&lastB&&lastB.r==='b'&&!lastB.noq&&lastB.qt!=='close'&&((heavy&&an.len>=40)||n%3===0)){
+    rec.noq=1;if(an.echo){rec.ex='echo';rec.eq=an.echo}
+  }
+  const ok=t=>{
+    if(t==='scale'&&bots.some(b=>b.qt==='scale'))return false;
+    if(POS.indexOf(t)>=0&&(n<2||(heavy&&(n<4||an.int>=.5))))return false;
+    return true;
+  };
+  let qt;
+  if(rec.noq){rec.nq=1}
+  else if(an.end&&n>=2)qt='close';
+  else if(lastB&&lastB.qt==='spark'&&an.len<=16&&!an.nonAnswer)qt='detail';
+  else if(an.nonAnswer)qt=firstFree(['weather','label','body'],asked)||'weather';
+  else if(ctx==='neutral')qt=firstFree(PREF.neutral,asked)||'label';
+  else{
+    let list=PREF[ctx].filter(t=>asked.indexOf(t)<0);
+    if(an.len>=45||bots.some(b=>b.qt==='scene'))list=list.filter(t=>t!=='scene');
+    if(n<4||bots.some(b=>b.qt==='tomorrow'))list=list.filter(t=>t!=='tomorrow');
+    else if(asked.indexOf('tomorrow')<0)list.unshift('tomorrow');
+    if(['family','friends','partner'].indexOf(rec.tp)>=0&&['sad','angry','lonely'].indexOf(ctx)>=0&&list.indexOf('body')>=0){list=list.filter(t=>t!=='body');list.push('body')}
+    list=list.filter(ok);
+    qt=list[0]||firstFree(POOL.filter(ok),asked)||'meaning';
+  }
+  if(qt)rec.qt=qt;
+  if(n>=4)rec.wr=1;
+  return rec;
+}
+function pickQ(m,d){
+  const Q=d.Q[m.qt],mv=Q.mv&&Q.mv[m.cm];
+  const list=(mv||Q.b).filter(s=>s.indexOf('{t}')<0||m.tp);
+  return fmt(list[Math.floor(m.qv)%list.length],{t:m.tp?d.topic[m.tp]:''});
+}
+function nm(id,d){const s=d.mood[id][0];return lang==='en'?s.toLowerCase():s}
+function botText(m,d){
+  if(m.qt==='close')return d.closeAsk;
+  const own=d.rp[m.mood]||d.rp.neutral,ctx=d.rp[m.cm]||d.rp.neutral,parts=[],sep=lang==='ja'?'':' ';
+  if(m.ak==='skip')parts.push(d.skip[m.e%d.skip.length]);
+  else if(m.ak==='sc')parts.push(m.sv<=3?d.scLow:m.sv>=7?d.scHigh:d.scMid);
+  else if(m.ak==='na')parts.push(d.na[m.e%d.na.length]);
+  else if(m.ak==='mix'&&!m.sm){const lastM=m.lm||m.mood,firstM=lastM===m.mood?m.mood2:m.mood;parts.push(fmt(d.mix,{a:nm(firstM,d),b:nm(lastM,d)}))}
+  else parts.push(own.emp[m.e%own.emp.length]);
+  if(m.ex==='echo')parts.push(fmt(d.echo,{q:m.eq}));
+  else if(m.ex==='ins')parts.push(ctx.ins[m.e%ctx.ins.length]);
+  else if(m.ex==='cb')parts.push(fmt(d.cb,{q:m.eq}));
+  if(m.sm){let t=m.sb?fmt(d.recap2,{a:nm(m.sa,d),b:nm(m.sb,d)}):fmt(d.recap1,{a:nm(m.sa,d)});if(m.sq)t+=sep+fmt(d.recapQ,{q:m.sq});parts.push(t)}
+  if(m.noq){if(m.ak!=='skip')parts.push(d.rest[m.e%d.rest.length]);return parts.join(sep)}
+  return parts.join(sep)+'\n'+pickQ(m,d);
+}
+function chipsFor(m,d){
+  const out=[];
+  if(m.noq){out.push({l:d.wrap,act:'wrap'});return out}
+  if(m.qt==='close'){out.push({l:d.wrap,act:'wrap'});out.push({l:d.more,t:d.moreSend});return out}
+  const C=d.QC[m.qt];
+  if(C){
+    const arr=(C.mv&&C.mv[m.cm]!==undefined)?C.mv[m.cm]:(C.b||[]);
+    arr.forEach(x=>out.push({l:x[0],t:x[1]||x[0],f:x[2]||null}));
+  }
+  if(m.wr)out.push({l:d.wrap,act:'wrap'});
+  return out;
+}
+
+/* ---------- 5. Today's line ---------- */
+function pickQuote(us){
+  let best={s:0,t:''};
+  us.forEach((m,idx)=>{
+    if(m.ch||m.c||m.na)return;
+    clauseList(m.t).forEach(c=>{
+      const t=trimC(c.t);if(t.length<5||t.length>30)return;
+      const sc=scoreClause(c.t);let tot=0,light=0;
+      for(const id in sc){tot+=sc[id];if(id==='calm'||id==='happy')light+=sc[id]}
+      const s=tot+light*.8+idx*.15+(t.length>=8?.3:0);
+      if(s>best.s)best={s:s,t:t};
+    });
+  });
+  if(best.t)return best.t;
+  let longest='';
+  us.forEach(m=>{if(!m.ch&&!m.c&&!m.na&&m.t.length>longest.length)longest=m.t});
+  longest=trimC(longest);
+  return longest.length>28?longest.slice(0,28)+'…':longest;
+}
+function oneLiner(s,d){
+  const f=d.mood;
+  if(s.q&&s.arc){
+    const a=s.arc[0],b=s.arc[1];
+    if((b==='calm'||b==='happy')&&a!=='calm'&&a!=='happy')return fmt(d.arcUp,{a:nm(a,d),b:nm(b,d),q:s.q});
+  }
+  if(s.q){const arr=d.line[s.dom]||d.line.neutral;return fmt(arr[hash(s.q)%arr.length],{q:s.q})}
+  return d.close[s.dom];
+}
+function flowText(s,d){
+  const out=[];
+  if(s.tps&&s.tps.length)out.push(fmt(d.flowTp,{t:s.tps.map(id=>d.topic[id]).join(d.and)}));
+  if(s.arc){
+    const a=s.arc[0],b=s.arc[1],up=(b==='calm'||b==='happy')&&a!=='calm'&&a!=='happy';
+    if(!(up&&s.q))out.push(fmt(d.flowArc,{a:nm(a,d),b:nm(b,d)}));
+  }
+  return out.join(lang==='ja'?'':' ');
+}
+
+/* ---------- 6. Saving and the next day ---------- */
+function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function daysBetween(a,b){return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/864e5)}
+function tally(us){
+  const c={};us.forEach(m=>{c[m.m]=(c[m.m]||0)+1;if(m.m2)c[m.m2]=(c[m.m2]||0)+1});
+  let ids=Object.keys(c);const non=ids.filter(i=>i!=='neutral');if(non.length)ids=non;
+  const dom=ids.slice().sort((a,b)=>c[b]-c[a])[0];
+  return {c:c,ids:ids,dom:dom};
+}
+function saveLast(day,dom){try{localStorage.setItem('dusktalk2_last',JSON.stringify({day:day,dom:dom}))}catch(e){}}
+function prevDom(){
+  try{
+    const l=JSON.parse(localStorage.getItem('dusktalk2_last')||'null');
+    if(l&&MM[l.dom]&&l.day&&l.day!==today()){const g=daysBetween(l.day,today());if(g>=1&&g<=3)return l.dom}
+  }catch(e){}
+  return null;
+}
+function save(){try{localStorage.setItem('dusktalk2_state',JSON.stringify({msgs:msgs,day:today()}))}catch(e){}}
+function load(){
+  try{
+    const d=JSON.parse(localStorage.getItem('dusktalk2_state')||'null');
+    if(!(d&&Array.isArray(d.msgs)&&d.msgs.length))return;
+    if(d.day&&d.day!==today()){
+      const us=d.msgs.filter(m=>m.r==='u');
+      if(us.length>=2&&!us.some(m=>m.c)&&!d.msgs.some(m=>m.r==='s'))saveLast(d.day,tally(us).dom);
+      return;
+    }
+    msgs=d.msgs;
+  }catch(e){}
+}
+function initLang(){
+  let l=null;
+  if(window.APP_LANG==='ja'||window.APP_LANG==='en')l=window.APP_LANG;
+  if(!l){try{const q=new URLSearchParams(location.search).get('lang');if(q==='ja'||q==='en')l=q}catch(e){}}
+  if(!l){try{const s=localStorage.getItem('dusktalk2_lang');if(s==='ja'||s==='en')l=s}catch(e){}}
+  if(!l){try{l=(navigator.language||'').toLowerCase().indexOf('ja')===0?'ja':null}catch(e){}}
+  lang=l||'en';
+}
+
+/* ---------- 7. Drawing ---------- */
+function renderLegend(){
+  const lg=$('#lg');lg.innerHTML='';
+  MOODS.forEach(m=>{
+    const b=document.createElement('button');b.type='button';b.setAttribute('data-demo','legend-'+m.id);
+    const sw=document.createElement('span');sw.className='sw';sw.style.background='linear-gradient(180deg,'+m.c[0]+','+m.c[2]+')';
+    const t=document.createElement('span');const n=T().mood[m.id];t.textContent=m.face+' '+n[0]+'＝'+n[1];
+    b.append(sw,t);b.onclick=()=>setMix([[m.id,1]],.5);lg.appendChild(b);
+  });
+}
+function renderStarters(){
+  const box=$('#starters');box.innerHTML='';
+  if(msgs.some(m=>m.r==='u'))return;
+  T().starters.forEach((s,i)=>{
+    const b=document.createElement('button');b.type='button';b.textContent=s;b.setAttribute('data-demo','starter-'+(i+1));
+    b.onclick=()=>send(s);box.appendChild(b);
+  });
+}
+function mkRow(cls){const r=document.createElement('div');r.className='row '+cls;return r}
+function qrRow(m,d){
+  const chips=chipsFor(m,d);if(!chips.length)return null;
+  const box=document.createElement('div');box.className='qr';box.setAttribute('data-demo','quick-replies');
+  chips.forEach(c=>{
+    const b=document.createElement('button');b.type='button';b.className='qbtn';b.textContent=c.l;
+    if(c.act==='wrap')b.onclick=()=>wrapUp();
+    else b.onclick=()=>send(c.t,{ch:1,force:c.f});
+    box.appendChild(b);
+  });
+  return box;
+}
+function buildNode(m,isLast){
+  const d=T();
+  if(m.r==='u'){const r=mkRow('user');const b=document.createElement('div');b.className='bubble user';b.textContent=m.t;r.appendChild(b);return r}
+  if(m.r==='g'){
+    const r=mkRow('bot');
+    if(m.prev&&MM[m.prev]){const p=document.createElement('div');p.className='bubble bot prev';p.setAttribute('data-demo','prev-step');p.textContent=d.prevLead+d.tmr[m.prev]+'\n'+d.prevAsk;r.appendChild(p)}
+    const b=document.createElement('div');b.className='bubble bot';b.textContent=d.greet;r.appendChild(b);return r;
+  }
+  if(m.r==='c'){
+    const r=mkRow('bot');const b=document.createElement('div');b.className='bubble bot care';b.setAttribute('data-demo','care-message');
+    const h=document.createElement('div');h.textContent=d.careHead;
+    const p=document.createElement('div');p.textContent=d.careBody;
+    const hp=document.createElement('div');hp.textContent=d.careHelp;
+    const ul=document.createElement('ul');
+    d.careLines.forEach(x=>{
+      const li=document.createElement('li');li.append(x[0]+(x[1]?' ':''));
+      if(x[1]){const a=document.createElement('a');a.href='tel:'+x[1].replace(/-/g,'');a.textContent=x[1];li.appendChild(a)}
+      ul.appendChild(li);
+    });
+    const t=document.createElement('div');t.textContent=d.careTail;
+    b.append(h,p,hp,ul,t);r.appendChild(b);return r;
+  }
+  if(m.r==='b'){
+    const r=mkRow('bot');
+    if(m.mood&&m.mood!=='neutral'){
+      const c=document.createElement('div');c.className='chip';
+      const names=[d.mood[m.mood][0]].concat(m.mood2?[d.mood[m.mood2][0]]:[]).join(d.dot);
+      c.textContent=MM[m.mood].face+' '+fmt(d.sensed,{m:names});r.appendChild(c);
+    }
+    const b=document.createElement('div');b.className='bubble bot';b.textContent=botText(m,d);r.appendChild(b);
+    if(isLast){const qr=qrRow(m,d);if(qr)r.appendChild(qr)}
+    return r;
+  }
+  if(m.r==='s'){
+    const r=mkRow('bot');const mo=MM[m.dom],mix=m.mix||[[m.dom,1]];
+    const card=document.createElement('div');card.className='card';card.setAttribute('data-demo','summary-card');
+    const strip=document.createElement('div');strip.className='strip';strip.style.background=gradOf(mix,'135deg');
+    const sb=document.createElement('b');sb.textContent=d.sumTitle+'：'+skyNames(mix);
+    const ss=document.createElement('span');ss.textContent=mix.map(x=>MM[x[0]].orb).join('');strip.append(sb,ss);
+    const body=document.createElement('div');body.className='body';
+    const hl=document.createElement('h3');hl.textContent=d.sumLine;
+    const lead=document.createElement('p');lead.className='lead';lead.setAttribute('data-demo','summary-line');lead.textContent=oneLiner(m,d);
+    body.append(hl,lead);
+    const ft=flowText(m,d);
+    if(ft){const fp=document.createElement('p');fp.className='flow';fp.textContent=ft;body.appendChild(fp)}
+    const h=document.createElement('h3');h.textContent=d.sumMoods;
+    const mc=document.createElement('div');mc.className='mchips';
+    m.counts.forEach(x=>{const e=document.createElement('em');e.textContent=MM[x[0]].face+' '+d.mood[x[0]][0]+' ×'+x[1];mc.appendChild(e)});
+    const nt=document.createElement('div');nt.className='note';
+    const h2=document.createElement('h3');h2.textContent=d.sumTmr;const p2=document.createElement('p');p2.style.margin='0';p2.textContent=d.tmr[m.dom];nt.append(h2,p2);
+    const p3=document.createElement('p');p3.style.cssText='margin:12px 0;color:#6b5a85;font-size:13px';p3.textContent=fmt(d.sumTalked,{n:m.n})+' '+d.sumGood+' 🌙';
+    const row=document.createElement('div');row.className='btnrow';
+    const cb=document.createElement('button');cb.type='button';cb.className='cbtn sub';cb.textContent=d.copy;cb.setAttribute('data-demo','summary-copy');
+    cb.onclick=()=>{
+      const txt=oneLiner(m,T());
+      try{navigator.clipboard.writeText(txt).then(()=>toast(T().copied),()=>toast(T().copyFail))}catch(e){toast(T().copyFail)}
+    };
+    const nb=document.createElement('button');nb.type='button';nb.className='cbtn';nb.textContent=d.sumNew;nb.setAttribute('data-demo','summary-new');nb.onclick=newNight;
+    row.append(cb,nb);
+    body.append(h,mc,nt,p3,row);card.append(strip,body);r.appendChild(card);return r;
+  }
+}
+function scrollEnd(){chat.scrollTop=chat.scrollHeight}
+function renderAll(){chat.innerHTML='';msgs.forEach((m,i)=>chat.appendChild(buildNode(m,i===msgs.length-1)));scrollEnd();renderStarters()}
+function append(m){
+  chat.querySelectorAll('.qr').forEach(e=>e.remove());
+  msgs.push(m);chat.appendChild(buildNode(m,true));scrollEnd();save();
+}
+function toast(txt){
+  const t=$('#toast');t.textContent=txt;clearTimeout(toastT);toastT=setTimeout(()=>{t.textContent=''},3800);
+}
+function showTyping(){
+  const r=mkRow('bot typing');r.id='typing';const b=document.createElement('div');b.className='bubble bot';b.setAttribute('aria-label',T().typing);
+  b.innerHTML='<i></i><i></i><i></i>';r.appendChild(b);chat.appendChild(r);scrollEnd();
+}
+
+/* ---------- 8. Sending ---------- */
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+// Where replies come from. Today: the built-in planner above, nothing leaves the device.
+// Later: call the AI endpoint inside getReply() and return {r:'b',mood:..,text:..}; botText() shows m.text if you add it,
+// and any error falls back to localReply(). (Then also update the 'fine' notice and add connect-src to the Content-Security-Policy.)
+function localReply(text,an){return planReply(text,an)}
+async function getReply(text,an){await sleep(1100);return localReply(text,an)}
+function send(text,opts){
+  opts=opts||{};
+  text=(text||'').trim();
+  if(!text){toast(T().toastEmpty);return}
+  if(busy)return;
+  clearTimeout(nudgeT);
+  busy=true;$('#send').disabled=true;
+  const crisis=isCrisis(text);
+  const an=analyze(text);
+  if(opts.force&&MM[opts.force]){an.p=opts.force;an.s=null;an.vec={};an.vec[opts.force]=1.1;an.int=.6}
+  const um={r:'u',t:text,m:an.p,m2:an.s,v:an.vec,i:an.int,tp:an.tp};
+  if(an.nonAnswer)um.na=1;
+  if(opts.ch)um.ch=1;
+  if(crisis)um.c=1;
+  append(um);renderStarters();
+  setMix(mixOf(foldMix()),um.i);
+  const n=msgs.filter(m=>m.r==='u').length;
+  showTyping();
+  const reply=crisis?sleep(1100).then(()=>({r:'c'})):getReply(text,an).catch(()=>localReply(text,an));
+  reply.then(rep=>{
+    const ty=$('#typing');if(ty)ty.remove();
+    append(rep);
+    busy=false;$('#send').disabled=false;
+    if(!crisis&&n>=3&&!hinted){hinted=true;toast(T().toastHint)}
+    if(rep.r==='b'){nudgeT=setTimeout(()=>{if(msgs.length&&msgs[msgs.length-1]===rep)toast(T().nudge)},50000)}
+    $('#msg').focus({preventScroll:true});
+  });
+}
+function wrapUp(){
+  const us=userRecs();
+  if(us.length<2){toast(T().toastMore);return}
+  const lastR=msgs.length?msgs[msgs.length-1].r:'';
+  // A night that touched something heavy is not closed with a cheerful card; the care message stays.
+  if(us.some(m=>m.c)){if(lastR!=='c')append({r:'c'});return}
+  if(lastR==='s')return;
+  const mix=mixOf(foldMix()),t=tally(us);
+  const dom=mix[0][0]!=='neutral'?mix[0][0]:t.dom;
+  const counts=t.ids.map(i=>[i,t.c[i]]);
+  const nn=us.filter(m=>m.m&&m.m!=='neutral');
+  const arc=nn.length>=2&&nn[0].m!==nn[nn.length-1].m?[nn[0].m,nn[nn.length-1].m]:null;
+  const tc={};us.forEach(m=>(m.tp||[]).forEach(id=>{tc[id]=(tc[id]||0)+1}));
+  const tps=Object.keys(tc).sort((a,b)=>tc[b]-tc[a]).slice(0,2);
+  const q=pickQuote(us);
+  setMix(mix,curInt);saveLast(today(),dom);
+  append({r:'s',counts:counts,dom:dom,n:us.length,q:q,arc:arc,tps:tps,mix:mix});
+}
+function newNight(){
+  clearTimeout(nudgeT);
+  msgs=[{r:'g',prev:prevDom()}];hinted=false;busy=false;$('#send').disabled=false;
+  const ty=$('#typing');if(ty)ty.remove();
+  setMix([['neutral',1]],0);renderAll();save();toast(T().toastNew);
+}
+function applyI18N(){
+  const d=T();document.documentElement.lang=lang;document.title=d.title;
+  document.querySelectorAll('[data-i18n]').forEach(e=>{e.textContent=d[e.dataset.i18n]});
+  document.querySelectorAll('[data-i18n-ph]').forEach(e=>{e.placeholder=d[e.dataset.i18nPh]});
+  document.querySelectorAll('[data-i18n-aria]').forEach(e=>{e.setAttribute('aria-label',d[e.dataset.i18nAria])});
+  $('#lj').classList.toggle('act',lang==='ja');$('#le').classList.toggle('act',lang==='en');
+}
+function setLang(l){
+  lang=l;try{localStorage.setItem('dusktalk2_lang',l)}catch(e){}
+  applyI18N();updatePill();renderLegend();renderAll();$('#toast').textContent='';
+}
+initLang();buildSky();load();
+if(!msgs.length)msgs=[{r:'g',prev:prevDom()}];
+{const us=userRecs();setMix(us.length?mixOf(foldMix()):[['neutral',1]],us.length?(us[us.length-1].i||0):0)}
+applyI18N();renderLegend();renderAll();
+$('#form').addEventListener('submit',e=>{e.preventDefault();const i=$('#msg'),v=i.value;if(!v.trim()){toast(T().toastEmpty);return}if(busy)return;i.value='';send(v)});
+$('#langBtn').onclick=()=>setLang(lang==='ja'?'en':'ja');
+$('#newBtn').onclick=newNight;
+$('#wrapBtn').onclick=wrapUp;
+$('#pill').onclick=()=>{const o=$('#legend').classList.toggle('open');$('#pill').setAttribute('aria-expanded',o)};
+</script>
+</body>
+</html>
